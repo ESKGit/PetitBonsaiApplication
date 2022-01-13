@@ -31,74 +31,92 @@ public class BonsaiController {
     private RepottingService repottingService;
     private PrunningService prunningService;
 
-
-    public BonsaiController(BonsaiService bonsaiService, WateringService wateringService, RepottingService repottingService, PrunningService prunningService)
-    {
-
+    public BonsaiController(BonsaiService bonsaiService, WateringService wateringService, RepottingService repottingService, PrunningService prunningService) {
         this.bonsaiService = bonsaiService;
         this.wateringService = wateringService;
         this.repottingService = repottingService;
         this.prunningService = prunningService;
     }
 
-
-
     @GetMapping()
-    public List<BonsaiDTO> findAll()
-    {
-        return bonsaiService.findAll().stream()
+    public ResponseEntity<List<BonsaiDTO>> findAll() {
+        List<BonsaiDTO> bonsaisList = bonsaiService.findAll().stream()
                 .map(bonsai -> BonsaiToDTOMapper.mapFromBonsai(bonsai))
                 .collect(Collectors.toList());
+
+        if (!bonsaisList.isEmpty())
+            return ResponseEntity.ok(bonsaisList);
+        else
+            return ResponseEntity.noContent().build();
     }
 
     @GetMapping(value = "/{uuid}")
-    public ResponseEntity<BonsaiDTO> findById(@PathVariable("uuid") UUID uuid)
-    {
+    public ResponseEntity<BonsaiDTO> findById(@PathVariable("uuid") UUID uuid) {
+        /*
         BonsaiDTO bonsaiDTO = BonsaiToDTOMapper.mapFromBonsai(bonsaiService.findById(uuid));
-
-        return new ResponseEntity<BonsaiDTO>(bonsaiDTO, HttpStatus.OK);
+        return new ResponseEntity<BonsaiDTO>(bonsaiDTO, HttpStatus.OK);*/
+        try {
+            Bonsai bonsai = bonsaiService.findById(uuid);
+            BonsaiDTO bonsaiDTO = BonsaiToDTOMapper.mapFromBonsai(bonsai);
+            if (bonsaiDTO.getStatus() == null) {
+                return ResponseEntity.status(HttpStatus.GONE).build();
+            } else {
+                return ResponseEntity.ok(bonsaiDTO);
+            }
+        } catch (NullPointerException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
-
     @PostMapping()
-    public ResponseEntity<BonsaiDTO> create(@RequestBody BonsaiDTO bonsaiDTOClient)
-    {
+    public ResponseEntity<BonsaiDTO> create(@RequestBody BonsaiDTO bonsaiDTOClient) {
         Bonsai bonsai = bonsaiService.createBonsai(BonsaiToDTOMapper.mapfromDTO(bonsaiDTOClient));
         BonsaiDTO bonsaiDTO = BonsaiToDTOMapper.mapFromBonsai(bonsai);
         return new ResponseEntity<BonsaiDTO>(bonsaiDTO, HttpStatus.CREATED);
     }
 
-
-
     //curl -X DELETE -H 'Content-Type:application/json' http://localhost:8080/bonsai/{uuid}
     @DeleteMapping("/{uuid}")
-    public ResponseEntity<BonsaiDTO> deleteById(@PathVariable("uuid") UUID uuid)
-    {
-        bonsaiService.deleteBonsaiById(uuid);
-        return ResponseEntity.ok().build();
+    public ResponseEntity<BonsaiDTO> deleteById(@PathVariable("uuid") UUID uuid) {
+        /*bonsaiService.deleteBonsaiById(uuid);
+        return ResponseEntity.ok().build();*/
+        try {
+            bonsaiService.deleteBonsaiById(uuid);
+            return ResponseEntity.noContent().build();
+        } catch (NullPointerException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
-
-
 
 //curl -X PATCH -H 'Content-Type:application/json' http://localhost:8080/bonsai/{uuid}-d '{"name":"NAME_PATCH_TEST", "species":"tst_spc4", "acquisition_date":"2021-12-12", "acquisition_age":"21", "status":"alive"}'
 
     @PatchMapping("/{uuid}")
     public ResponseEntity<BonsaiDTO> patchBonsaiPartially(@PathVariable UUID uuid, @RequestBody BonsaiDTO bonsaiDTOClient) {
-
-        Bonsai bonsai = bonsaiService.processPatch(BonsaiToDTOMapper.mapfromDTO(bonsaiDTOClient), uuid);
-        BonsaiDTO bonsaiDTO = BonsaiToDTOMapper.mapFromBonsai(bonsai);
-        return new ResponseEntity<BonsaiDTO>(bonsaiDTO, HttpStatus.OK);
-
+        try {
+            Bonsai bonsai = bonsaiService.processPatch(BonsaiToDTOMapper.mapfromDTO(bonsaiDTOClient), uuid);
+            BonsaiDTO bonsaiDTO = BonsaiToDTOMapper.mapFromBonsai(bonsai);
+            return new ResponseEntity<BonsaiDTO>(bonsaiDTO, HttpStatus.OK);
+        } catch (NullPointerException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
-
-
 
     @PutMapping("/{uuid}/status")
     public ResponseEntity<BonsaiDTO> putBonsai(@PathVariable("uuid") UUID uuid, @RequestBody String status) {
-
-        bonsaiService.processPut(status, uuid);
-
-        return ResponseEntity.ok().build();
+        try{
+            bonsaiService.processPut(status, uuid);
+            return ResponseEntity.ok().build();
+        }catch (NullPointerException e){
+            return ResponseEntity.notFound().build();
+        }catch (Exception e){
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @GetMapping("/{uuid}/watering")
@@ -115,14 +133,10 @@ public class BonsaiController {
                 .collect(Collectors.toList());
     }
 
-
     @GetMapping("/{uuid}/prunning")
     public List<PrunningDTO> getAllPruningFromBonsaiUUID(@PathVariable("uuid") UUID uuid) {
         return prunningService.findAll(uuid).stream()
                 .map(prunning -> PrunningToDTOMapper.mapFromPrunning(prunning))
                 .collect(Collectors.toList());
     }
-
-
 }
-
