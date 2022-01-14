@@ -75,5 +75,9 @@ public class OwnerRepository {
         return ownerDao.findById(newOwnerUUID).map(EntityToOwnerMapper::mapFromEntity);
     }
 
-
+    @Transactional
+    public Bonsai addBonsai(Owner owner, Bonsai bonsai) {
+        ownerDao.addBonsaiToOwner(owner.getId(), bonsai.getId());
+        return bonsai;
+    }
 }

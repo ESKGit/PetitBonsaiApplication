@@ -5,6 +5,7 @@ import fr.paris8.iutmontreuil.csid.exposition.DTO.OwnerDTO;
 import fr.paris8.iutmontreuil.csid.infrastructure.Repository.OwnerRepository;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -47,5 +48,32 @@ public class OwnerService {
         return repository.tranfer(newOwner, bonsaiIDToTransfer);
     }
 
+    public List<Bonsai> addBonsai(UUID owner_id, List<Bonsai> bonsaiList) {
+        List<Bonsai> bonsaiList1 = new ArrayList<>();
+        Owner owner = repository.findById(owner_id);
+
+            for (Bonsai bonsai : bonsaiList) {
+
+                if(!(checkIfAlreadyHave(bonsai)))  bonsaiList1.add(repository.addBonsai(owner, bonsai));
+            }
+
+        return bonsaiList1;
+    }
+
+    public boolean checkIfAlreadyHave(Bonsai bonsai)
+    {
+        boolean alreadyHave = false;
+        for(Owner owners : findAll(-1))
+        {
+            for(Bonsai bonsaiComparison : owners.getBonsaiList())
+            {
+                if(bonsaiComparison.getId().equals(bonsai.getId()))
+                {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
 
 }

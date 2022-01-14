@@ -80,17 +80,11 @@ public class OwnerController {
 
 
     @PostMapping(value = "/{owner_id}/bonsais")
-    public ResponseEntity<OwnerDTO> addBonsaisToOwner(@RequestBody String ownerName)
+    public ResponseEntity<List<BonsaiDTO>> addBonsaisToOwner(@PathVariable("owner_id") UUID owner_id, @RequestBody List<Bonsai> bonsaiList)
     {
+        List<BonsaiDTO> bonsaiDTOList = ownerService.addBonsai(owner_id, bonsaiList).stream().map(BonsaiToDTOMapper::mapFromBonsai).collect(Collectors.toList());
 
-        OwnerDTO ownerDTOname = new OwnerDTO();
-        ownerDTOname.setName(ownerName);
-
-        Owner owner = ownerService.create(OwnerToDTOMapper.mapfromDTO(ownerDTOname));
-
-        OwnerDTO ownerDTO = OwnerToDTOMapper.mapFromOwner(owner);
-
-        return new ResponseEntity<OwnerDTO>(ownerDTO, HttpStatus.CREATED);
+        return new ResponseEntity<List<BonsaiDTO>>(bonsaiDTOList, HttpStatus.OK);
     }
 
 }
